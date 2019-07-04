@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong!</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link
+      href="pong.css"
+      media="screen, print"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+
+  <body>
+    <script src="https://npmcdn.com/parse@1.8.5/dist/parse-latest.js"></script>
+    <script>
+      Parse.initialize(
+        "MBN8HQDuU9EPuUhfOFFSBessvfCUfrEqKShTokX9",
+        "1SOkBnGL0jPgwvgDqwgOpVQJLex9e083CWDtldMv"
+      );
+      Parse.serverURL = "https://parseapi.back4app.com/";
+      window.fbAsyncInit = function() {
+        Parse.FacebookUtils.init({
+          appId: "1784712564964706",
+          cookie: true,
+          xfbml: true,
+          version: "v3.3"
+        });
+
+        FB.AppEvents.logPageView();
+      };
+
+      (function(d, s, id) {
+        var js,
+          fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {
+          return;
+        }
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      })(document, "script", "facebook-jssdk");
+
+      function logIn() {
+        Parse.FacebookUtils.logIn("public_profile,email", {
+          success: function(user) {
+            if (!user.existed()) {
+              FB.api("/me?fields=id,name,email,permissions", function(
+                response
+              ) {
+                user.set("username", response.name);
+                user.set("email", response.email);
+
+                user.save(null, {
+                  success: function(user) {
+                    alert(
+                      "User logged in and sign up through Facebook, with username: " +
+                        user.get("username") +
+                        " and email: " +
+                        user.get("email")
+                    );
+
+                    // You should redirect the user to another page after a successful login.
+                    window.location.replace(
+                      "http://js-fb-login.back4app.io/logout.html"
+                    );
+                  },
+                  error: function(user, error) {
+                    alert(
+                      "Failed to save user to database with error: " +
+                        error.message
+                    );
+                  }
+                });
+              });
+            } else {
+              alert("User logged in through Facebook!");
+              // You should redirect the user to another page after a successful login.
+              window.location.replace(
+                "http://js-fb-login.back4app.io/logout.html"
+              );
+            }
+          },
+          error: function(user, error) {
+            console.log(
+              "User cancelled the Facebook login or did not fully authorize."
+            );
+          }
+        });
+      };
+      function addPoint() {
+        var user = Parse.User.current();
+        var Score = Parse.Object.extend("Score");
+        var query = new Parse.Query(Score);
+        query.equalTo("Player", user);
+        query.find({
+          success: function(result) {
+            if (result.length == 0) {
+              var score = new Score();
+              score.set("player", user);
+              score.set("score", 1);
+              score.save({
+                success: function(newscore) {
+                  console.log("Score saved with id" + newscore.id);
+                },
+                error: function(newScore, error) {
+                  console.log("error on saving new player" + error.message);
+                }
+              });
+            } else {
+              oldScore = result[0];
+              oldScore.increment("secore");
+              oldScore.save(null, {
+                success: function(newScore) {
+                  console.log("Score updated" + newScore.id);
+                },
+                error: function(newScore, error) {
+                  console.log("cannot save new score" + error.message);
+                }
+              });
+            }
+          },
+          error: function(error) {
+            console.log(error.id + " " + error.message);
+          }
+        });
+      }
+    </script>
+
+    <div id="sidebar">
+      <h2>This is Pong!</h2>
+
+      <ul class="parts">
+        <li><a href="/" class="selected">Full Game</a></li>
+        <li>
+          <a href="/part1"><i>game runner</i> - Part 1</a>
+        </li>
+        <li>
+          <a href="/part2"><i>bouncing ball</i> - Part 2</a>
+        </li>
+        <li>
+          <a href="/part3"><i>game loop</i> - Part 3</a>
+        </li>
+        <li>
+          <a href="/part4"><i>collision detection</i> - Part 4</a>
+        </li>
+        <li>
+          <a href="/part5"><i>computer AI</i> - Part 5</a>
+        </li>
+      </ul>
+
+      <div class="description">
+        <p>
+          This is a javascript version of Pong.
+        </p>
+        <p>
+          Press <b>1</b> for a single player game.<br />
+          Press <b>2</b> for a double player game.<br />
+          Press <b>0</b> to watch the computer play itself.
+        </p>
+        <p>
+          Player 1 moves using the <b>Q</b> and <b>A</b> keys.<br />
+          Player 2 moves using the <b>P</b> and <b>L</b> keys.
+        </p>
+        <p><b>Esc</b> can be used to abandon a game.</p>
+      </div>
+
+      <div class="settings">
+        <label for="sound">sound: </label>
+        <input type="checkbox" id="sound" />
+      </div>
+
+      <div class="settings">
+        <label for="stats">stats: </label>
+        <input type="checkbox" id="stats" checked />
+      </div>
+
+      <div class="settings">
+        <label for="footprints">footprints: </label>
+        <input type="checkbox" id="footprints" />
+      </div>
+
+      <div class="settings">
+        <label for="predictions">predictions: </label>
+        <input type="checkbox" id="predictions" />
+      </div>
+
+      <div class="settings">
+        <p>
+          <button class="loginBtn loginBtn--facebook" onclick="logIn()">
+            Login with Facebook
+          </button>
+        </p>
+      </div>
+    </div>
+
+    <canvas id="game">
+      <div id="unsupported">
+        Sorry, this example cannot be run because your browser does not support
+        the &lt;canvas&gt; element
+      </div>
+    </canvas>
+
+    <script src="game.js" type="text/javascript"></script>
+    <script src="pong.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      Game.ready(function() {
+        var size = document.getElementById("size");
+        var sound = document.getElementById("sound");
+        var stats = document.getElementById("stats");
+        var footprints = document.getElementById("footprints");
+        var predictions = document.getElementById("predictions");
+
+        var pong = Game.start("game", Pong, {
+          sound: sound.checked,
+          stats: stats.checked,
+          footprints: footprints.checked,
+          predictions: predictions.checked
+        });
+
+        Game.addEvent(sound, "change", function() {
+          pong.enableSound(sound.checked);
+        });
+        Game.addEvent(stats, "change", function() {
+          pong.showStats(stats.checked);
+        });
+        Game.addEvent(footprints, "change", function() {
+          pong.showFootprints(footprints.checked);
+        });
+        Game.addEvent(predictions, "change", function() {
+          pong.showPredictions(predictions.checked);
+        });
+      });
+    </script>
+  </body>
+</html>

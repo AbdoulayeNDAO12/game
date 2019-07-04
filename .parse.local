@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "AppliGame": {
+      "applicationId": "MBN8HQDuU9EPuUhfOFFSBessvfCUfrEqKShTokX9"
+    },
+    "_default": {
+      "link": "AppliGame"
+    }
+  }
+}
