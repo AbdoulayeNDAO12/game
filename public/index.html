@@ -93,7 +93,7 @@
         var user = Parse.User.current();
         var Score = Parse.Object.extend("Score");
         var query = new Parse.Query(Score);
-        query.equalTo("Player", user);
+        query.equalTo("player", user);
         query.find({
           success: function(result) {
             if (result.length == 0) {
